@@ -12,20 +12,22 @@ object App {
     indexGenerator.close()
   }
 
-  private def search(query: String) = {
+  def search(query: String): Int = {
     val indexClient = new IndexClient(indexPath)
-    indexClient.search(query) foreach println
+    indexClient.search(query)
   }
+
+  def numDocs: Int = new IndexClient(indexPath).numDocs()
 
   def main(args: Array[String]): Unit = {
     val command = args.head
     if (command == "index") generateIndex()
     else if (command == "search") {
       val searchTerm = args.drop(1).mkString(" ")
-      search(searchTerm)
+      println(search(searchTerm))
     }
     else {
-      println("Unknown command")
+      throw new IllegalArgumentException("Unknown command")
     }
   }
 }

@@ -20,12 +20,10 @@ class IndexGenerator(indexFolder: String) {
 
   private def getDocument(sampleDocument: SampleDocument) = {
     val doc = new Document()
-    doc.add(new TextField("text", sampleDocument.text, Field.Store.YES))
-    doc.add(new StringField("title", sampleDocument.title, Field.Store.YES))
-    doc.add(new StringField(
+    doc.add(new TextField("content", s"${sampleDocument.title} ${sampleDocument.text}", Field.Store.YES))
+    doc.add(new LongPoint(
       "date",
-      DateTools.dateToString(sampleDocument.date, DateTools.Resolution.MINUTE),
-      Field.Store.YES
+      sampleDocument.date.getTime
     ))
     doc
   }
