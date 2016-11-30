@@ -1,4 +1,5 @@
 import re
+import codecs
 from os import listdir, path
 from sys import argv
 
@@ -9,7 +10,7 @@ def fix_file(filename):
             '&mdash;': '&#8212;',
             '&deg;': '&#176;'
     }
-    with open(name + extension, 'r+') as content_file:
+    with codecs.open(name + extension, 'r+', encoding='utf8') as content_file:
         content = content_file.read()
         substituted = content
         for pattern, replacement in substitutions.items():
