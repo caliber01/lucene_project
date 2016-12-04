@@ -7,20 +7,26 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.{DateTools, LongPoint}
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.{BooleanClause, BooleanQuery, IndexSearcher, ScoreDoc}
+import org.apache.lucene.search.similarities.Similarity
+import org.apache.lucene.search._
 import org.apache.lucene.store.FSDirectory
 
-class IndexClient(indexDir: String) {
+class IndexClient(indexDir: String, similarity: Similarity) {
   private val indexReader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDir)))
-  private val indexSearcher = new IndexSearcher(indexReader)
+  private val indexSearcher = {
+    val indexSearcher = new IndexSearcher(indexReader)
+    indexSearcher.setSimilarity(similarity)
+    indexSearcher
+  }
   private val queryParser =  new QueryParser("content", new StandardAnalyzer())
 
   def extractDoc(scoreDoc: ScoreDoc): SampleDocument = {
     val doc = indexSearcher.doc(scoreDoc.doc)
-    val title = doc.getField("title").stringValue
-    val rawDate = doc.getField("date").stringValue
+    val id = doc.get("id")
+    val title = doc.get("title")
+    val rawDate = doc.get("date")
     val date = DateTools.stringToDate(rawDate)
-    new SampleDocument(title, "", date)
+    new SampleDocument(id, title, "", date)
   }
 
   def numDocs(): Int = indexReader.numDocs()
@@ -51,7 +57,7 @@ class IndexClient(indexDir: String) {
     calendar.getTimeInMillis
   }
 
-  def search(q: String): Int = {
+  def search(q: String, k: Int) = {
     val Array(term, date) = q.split("@ ")
     val Array(fromYear, toYear) = date.split("-")
     val from = prepareDate(fromYear, alignLowerBound = true)
@@ -65,8 +71,11 @@ class IndexClient(indexDir: String) {
       .add(datePredicate, BooleanClause.Occur.MUST)
       .build()
 
-    val topDocs = indexSearcher.search(query, 10)
-    topDocs.totalHits
+    val topDocs = indexSearcher.search(query, k)
+    topDocs.scoreDocs.map(scoreDoc => (
+      indexSearcher.doc(scoreDoc.doc).get("id"),
+      scoreDoc.score
+    ))
   }
 
   def close(): Unit = indexReader.close()

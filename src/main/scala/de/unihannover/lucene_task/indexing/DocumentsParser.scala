@@ -11,12 +11,13 @@ class DocumentsParser() {
   private def parseDocument(node: Node): SampleDocument = {
     def getMetaTag(name: String) = ((node \\ "tag") find (node => (node \ "@name").text == name)).get.text
 
+    val id = (node \ "@id").text
     val title = getMetaTag("title")
     val rawDate = getMetaTag("date")
     val date = dateFormat.parse(rawDate)
     val text = (node \\ "text").text
 
-    new SampleDocument(title, text, date)
+    new SampleDocument(id, title, text, date)
   }
 
   def parseCollection(file: File) = {

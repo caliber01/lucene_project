@@ -1,4 +1,6 @@
 target
 .idea
 src/main/resources/documents*
+original_index
+custom_index
 index
