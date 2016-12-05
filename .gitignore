@@ -3,4 +3,6 @@ target
 src/main/resources/documents*
 original_index
 custom_index
+dirichlet
+mercer
 index

@@ -1,16 +1,14 @@
 package de.unihannover.lucene_task.ranking
 
-import org.apache.lucene.search.similarities.BasicStats
+import org.apache.lucene.search.similarities.{BasicStats, SimilarityBase}
 
 
-class LMDirichletsSimilarity(val mu: Float = 2000) extends LMSimilarity {
+class LMDirichletsSimilarity(val mu: Float = 2000) extends SimilarityBase {
 
-  override def score(stats: BasicStats, freq: Float, docLen: Float): Float = {
-    val basicStats = stats.asInstanceOf[LMStats]
-    val score = stats.getBoost * (Math.log(1 + freq /
-      (mu * basicStats.collectionProbability)) +
-      Math.log(mu / (docLen + mu))).toFloat
-    if (score > 0.0f) score else 0.0f
+  override def score(stats: BasicStats, termFreq: Float, docLen: Float): Float = {
+    val collectionProbability = stats.getTotalTermFreq / stats.getNumberOfFieldTokens
+
+    Math.log((termFreq + mu * collectionProbability) / (docLen + mu)).toFloat
   }
 
   override def toString: String = ""

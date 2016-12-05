@@ -9,10 +9,9 @@ import scala.util.Try
 
 
 object App {
-  private val indexPath = "./index"
   private val collectionPath = getClass.getClassLoader.getResource("documents").getFile
 
-  def generateIndex(similarity: Similarity, indexPath: String = indexPath): Unit = {
+  def generateIndex(similarity: Similarity, indexPath: String): Unit = {
     val indexGenerator = new IndexGenerator(
       Paths.get(indexPath).toAbsolutePath.toString,
       similarity
@@ -21,12 +20,10 @@ object App {
     indexGenerator.close()
   }
 
-  def search(query: String, k: Int, similarity: Similarity = new ClassicSimilarity(), indexPath: String = indexPath) = {
+  def search(query: String, k: Int, similarity: Similarity = new ClassicSimilarity(), indexPath: String) = {
     val indexClient = new IndexClient(indexPath, similarity)
     indexClient.search(query, k)
   }
-
-  def numDocs: Int = new IndexClient(indexPath, new ClassicSimilarity()).numDocs()
 
   // usage search dirichlet 2000 50 america@ 2000-2012
   def main(args: Array[String]): Unit = {
@@ -42,13 +39,14 @@ object App {
       parameter.map(new LMMercerSimilarity(_)).getOrElse(new LMMercerSimilarity())
     }
 
-    if (command == "index") generateIndex(similarity)
+    if (command == "index") generateIndex(similarity, s"./$similarityName")
     else if (command == "search") {
+      val indexName = s"./$similarityName"
       val records = args(3).toInt
       val searchTerm = args.drop(4).mkString(" ")
       println(searchTerm)
-      search(searchTerm, records, similarity)
-          .map { case (id, score) => f"$id: $score" } foreach println
+      search(searchTerm, records, similarity, indexName)
+          .map { case (id, _) => id } foreach println
     }
     else {
       throw new IllegalArgumentException("Unknown command")
