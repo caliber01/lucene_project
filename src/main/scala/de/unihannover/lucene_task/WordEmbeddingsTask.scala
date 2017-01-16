@@ -55,7 +55,6 @@ object WordEmbeddingsTask {
     val limit = 500
     val results = indexClient.search(query, None, limit)
 
-    println("Searching")
     val corpus = results.map(_.text.toLowerCase()).reduceLeft(_ + _)
     val stream = new ByteArrayInputStream(corpus.getBytes(StandardCharsets.UTF_8))
 
