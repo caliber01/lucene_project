@@ -20,15 +20,6 @@ class IndexClient(indexDir: String, similarity: Similarity) {
   }
   private val queryParser =  new QueryParser("content", new StandardAnalyzer())
 
-  def extractDoc(scoreDoc: ScoreDoc): SampleDocument = {
-    val doc = indexSearcher.doc(scoreDoc.doc)
-    val id = doc.get("id")
-    val title = doc.get("title")
-    val rawDate = doc.get("date")
-    val date = DateTools.stringToDate(rawDate)
-    new SampleDocument(id, title, "", date)
-  }
-
   def numDocs(): Int = indexReader.numDocs()
 
   private def prepareDate(year: String, alignLowerBound: Boolean) = {
@@ -57,25 +48,31 @@ class IndexClient(indexDir: String, similarity: Similarity) {
     calendar.getTimeInMillis
   }
 
-  def search(q: String, k: Int) = {
-    val Array(term, date) = q.split("@ ")
-    val Array(fromYear, toYear) = date.split("-")
-    val from = prepareDate(fromYear, alignLowerBound = true)
-    val to = prepareDate(toYear, alignLowerBound = false)
+  def search(q: String, temporalFilter: Option[String], k: Int): Array[SampleDocument] =
+    search(Array(q), temporalFilter, k)
 
-    val datePredicate = LongPoint.newRangeQuery("date", from, to)
-    val termPredicate = queryParser.parse(term)
+  def search(q: Iterable[String], temporalFilter: Option[String], k: Int): Array[SampleDocument] = {
+    val queryBuilder = new BooleanQuery.Builder()
 
-    val query = new BooleanQuery.Builder()
-      .add(termPredicate, BooleanClause.Occur.MUST)
-      .add(datePredicate, BooleanClause.Occur.MUST)
+    if (temporalFilter.isDefined) {
+      val Array(fromYear, toYear) = temporalFilter.get.split("-")
+      val from = prepareDate(fromYear, alignLowerBound = true)
+      val to = prepareDate(toYear, alignLowerBound = false)
+
+      val datePredicate = LongPoint.newRangeQuery("date", from, to)
+
+      queryBuilder.add(datePredicate, BooleanClause.Occur.MUST)
+    }
+
+    val queriesPredicate = q.map(term => queryParser.parse(term))
+      .foldLeft(new BooleanQuery.Builder())((builder, termPredicate) => builder.add(termPredicate, BooleanClause.Occur.SHOULD))
       .build()
 
+    queryBuilder.add(queriesPredicate, BooleanClause.Occur.MUST)
+
+    val query = queryBuilder.build()
     val topDocs = indexSearcher.search(query, k)
-    topDocs.scoreDocs.map(scoreDoc => (
-      indexSearcher.doc(scoreDoc.doc).get("id"),
-      scoreDoc.score
-    ))
+    topDocs.scoreDocs.map(scoreDoc => new SampleDocument(indexSearcher.doc(scoreDoc.doc)))
   }
 
   def close(): Unit = indexReader.close()

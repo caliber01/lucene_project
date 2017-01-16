@@ -15,21 +15,27 @@ class AppTest extends FunSuite {
   }*/
 
   def testSimilarities(originalSimilarity: Similarity, customSimilarity: Similarity) = {
-    val k = 5
+    val k = 100
+    val query = "donald@ 2011-2013"
     val originalIndexPath = "./original_index"
     println("Generating index with original similarity...")
-    App.generateIndex(originalSimilarity, originalIndexPath)
-    val originalResults = App.search("america@ 2011-2013", k, originalSimilarity, originalIndexPath)
+    //App.generateIndex(originalSimilarity, originalIndexPath)
+    val originalResults = App.search(query, k, originalSimilarity, originalIndexPath)
 
     val customIndexPath = "./custom_index"
     println("Generating index with custom similarity...")
-    App.generateIndex(customSimilarity, customIndexPath)
-    val customResults = App.search("america@ 2011-2013", k, customSimilarity, customIndexPath)
+    // App.generateIndex(customSimilarity, customIndexPath)
+    val customResults = App.search(query, k, customSimilarity, customIndexPath)
 
-    println("Original results")
+    /*println("Original results")
     originalResults.map { case (id, score) => f"$id: $score" } foreach println
     println("Custom results")
     customResults.map { case (id, score) => f"$id: $score" } foreach println
+    */
+    println(customResults.map { case (id, score) => id }.toSet.intersect(
+      originalResults.map { case (id, score) => id }.toSet
+    ).size)
+
     (originalResults, customResults)
   }
 

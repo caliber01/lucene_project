@@ -29,6 +29,7 @@ class IndexGenerator(indexFolder: String, similarity: Similarity) {
       "date",
       sampleDocument.date.getTime
     ))
+    doc.add(new StringField("date", DateTools.dateToString(sampleDocument.date, DateTools.Resolution.MILLISECOND), Field.Store.YES))
     doc
   }
 

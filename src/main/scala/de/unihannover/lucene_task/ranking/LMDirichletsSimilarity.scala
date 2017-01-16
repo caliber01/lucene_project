@@ -8,7 +8,7 @@ class LMDirichletsSimilarity(val mu: Float = 2000) extends SimilarityBase {
   override def score(stats: BasicStats, termFreq: Float, docLen: Float): Float = {
     val collectionProbability = stats.getTotalTermFreq / stats.getNumberOfFieldTokens
 
-    Math.log((termFreq + mu * collectionProbability) / (docLen + mu)).toFloat
+    stats.getBoost * Math.log((termFreq + mu * collectionProbability) / (docLen + mu)).toFloat
   }
 
   override def toString: String = ""

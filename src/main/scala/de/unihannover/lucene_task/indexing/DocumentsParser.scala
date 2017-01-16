@@ -1,6 +1,6 @@
 package de.unihannover.lucene_task
 
-import java.io.File
+import java.io.{File, StringReader}
 import java.text.SimpleDateFormat
 
 import scala.xml.{Node, XML}

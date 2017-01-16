@@ -8,7 +8,7 @@ class LMMercerSimilarity(val lambda: Float = 0.1F) extends SimilarityBase {
     val documentProbability = freq / docLen
     val collectionProbability = stats.getTotalTermFreq / stats.getNumberOfFieldTokens
 
-    Math.log((lambda * documentProbability) + (1 - lambda) * collectionProbability).toFloat
+    stats.getBoost * Math.log((lambda * documentProbability) + (1 - lambda) * collectionProbability).toFloat
   }
 
   override def toString: String = ""
