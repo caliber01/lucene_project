@@ -43,6 +43,7 @@ object WordEmbeddingsTask {
     val fullModelPath = s"$MODEL_PATH/$modelName"
     val modelFile = new File(fullModelPath)
 
+    // read model from disk or create new if one is not present
     val word2vec =
       if (modelFile.exists()) WordVectorSerializer.readWord2Vec(modelFile)
       else writeModel(query, fullModelPath)
@@ -96,6 +97,7 @@ object WordEmbeddingsTask {
     val tokenizedQuery = removeStopWords(query)
     println("tokenized query: ", tokenizedQuery)
 
+    // create expanded queries
     def replaceQueryTerm(index: Int) = {
       val i = index % tokenizedQuery.length
       val term = tokenizedQuery(i)
@@ -107,13 +109,15 @@ object WordEmbeddingsTask {
         if (similarTerms.nonEmpty) Seq(similarTerms(run - 1)) else Seq()
         , 1)
     }
-    // create expanded queries
     val expandedQueries = Range(0, 5) map replaceQueryTerm
     println("expandedQueries")
     expandedQueries map (_.mkString(" ")) foreach println
 
+    // get original query results
     val judgements = getJudgements(queryId)
     println("RESULT: " + query + ": " + precision(judgements, indexClient.search(query, None, 5)))
+
+    // run a disjunctive query that combines all 5 expanded queries
     val expandedResults = indexClient.search(expandedQueries.map(_.mkString(" ")), None, 5)
     println("EXPENDED RESULT: " + precision(judgements, expandedResults))
   }
